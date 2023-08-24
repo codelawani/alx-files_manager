@@ -2,7 +2,6 @@ import db from '../utils/db';
 import { getUserFromToken } from '../utils/helpers';
 
 const bcrypt = require('bcrypt');
-const { ObjectId } = require('mongodb');
 
 export default class UsersController {
   static async postNew(req, res) {
@@ -21,14 +20,10 @@ export default class UsersController {
 
   static async getMe(req, res) {
     const header = req.headers['x-token'];
-    const [userId] = await getUserFromToken(header);
-    console.log(userId);
-    if (!userId) {
+    const { userId, user } = await getUserFromToken(header, true);
+    if (!user) {
       res.status(401).json({ error: 'Unauthorized' });
     } else {
-      const usersColl = db.client.db().collection('users');
-      const userObjId = new ObjectId(userId);
-      const user = await usersColl.findOne({ _id: userObjId });
       res.json({ email: user.email, id: userId });
     }
   }

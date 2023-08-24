@@ -22,7 +22,7 @@ export default class AUthController {
 
   static async getDisconnect(req, res) {
     const header = req.headers.authorization;
-    const [userId, key] = await getUserFromToken(header);
+    const { userId, key } = await getUserFromToken(header);
     if (!userId) {
       res.status(401).json({ error: 'Unauthorized' });
     } else {
