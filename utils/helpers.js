@@ -33,11 +33,18 @@ export async function getUserFromToken(token, fetchFromDatabase = false) {
   const userIdFromRedis = await redis.get(redisKey);
   const userIdObjectId = new ObjectId(userIdFromRedis);
   let user;
-
   if (fetchFromDatabase) {
     user = await userCollection.findOne({ _id: userIdObjectId });
   }
 
   // Return userId, redisKey, and user information (if requested)
   return { userId: userIdFromRedis, redisKey, user };
+}
+/**
+ * Converts a string ID to a MongoDB ObjectId.
+ * @param {string} id - The string ID to convert.
+ * @returns {ObjectId} The corresponding ObjectId.
+ */
+export function toObjId(id) {
+  return new ObjectId(id);
 }
