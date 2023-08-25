@@ -4,6 +4,16 @@ import db from '../utils/db';
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
+const validateUser = async (token, respond) => {
+  const { userId } = await getUserFromToken(token);
+  let response = true;
+  console.log(userId);
+  if (!userId) {
+    respond('Unauthorized', 401);
+    response = false;
+  }
+  return response;
+};
 export default class FilesController {
   static async postUpload(req, res) {
     const token = req.headers['x-token'];
@@ -16,7 +26,7 @@ export default class FilesController {
       resp.status(statusCode).json({ error });
     }
     if (!userId) {
-      respond('Unauthorized');
+      respond('Unauthorized', 401);
       return;
     }
     if (!name) {
@@ -83,6 +93,66 @@ export default class FilesController {
       parentId: parentId || 0,
       type,
     };
+    // const { localPath, ...response } = { id: newFile.insertedId, ...fileDoc}
     res.status(201).json(response);
   }
+
+  static async getShow(req, res) {
+    function respond(error, statusCode = 400, resp = res) {
+      resp.status(statusCode).json({ error });
+    }
+    const token = req.headers['x-token'];
+    const { userId } = await getUserFromToken(token);
+    if (!userId) {
+      respond('Unauthorized');
+      return;
+    }
+    const filesCollection = db.client.db().collection('files');
+    const _id = toObjId(req.params.id);
+
+    const userFile = await filesCollection.findOne({ userId, _id });
+    console.log(userFile);
+    if (!userFile) {
+      respond('Not found', 404);
+    } else {
+      const { localPath, ...response } = userFile;
+      res.status(200).json(response);
+    }
+  }
+
+  static async getIndex(req, res) {
+    function respond(error, statusCode = 400, resp = res) {
+      resp.status(statusCode).json({ error });
+    }
+    const validUser = await validateUser(req.headers['x-token'], respond);
+    if (!validUser) {
+      return;
+    }
+    const parentId = req.query.parentId || 0;
+    const page = req.query.page || 1;
+    const filesCollection = db.client.db().collection('files');
+    const file = await filesCollection.findOne({ parentId });
+    if (!file) {
+      res.json([]);
+      return;
+    }
+    const limit = 20;
+    const skip = (page - 1) * limit;
+    const items = await filesCollection
+      .find({ parentId })
+      .skip(skip)
+      .limit(limit)
+      .project({ localPath: 0 })
+      .toArray();
+    res.json(items);
+  }
+
+  static async putPublish(req, res) {
+    function respond(error, statusCode = 400, resp = res) {
+      resp.status(statusCode).json({ error });
+    }
+    const filesCollection = db.client.db().collection('files');
+  }
+
+  static async putUnpublish() {}
 }
