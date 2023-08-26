@@ -20,6 +20,7 @@ router.get('/users/me', UsersController.getMe);
 router.get('/connect', AuthController.getConnect);
 router.get('/disconnect', AuthController.getDisconnect);
 
+router.get('/files/:id/data', FilesController.getFile);
 // User validator
 router.use(async (req, res, next) => {
   const token = req.headers['x-token'];
