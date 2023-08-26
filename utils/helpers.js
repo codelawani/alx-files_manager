@@ -46,5 +46,46 @@ export async function getUserFromToken(token, fetchFromDatabase = false) {
  * @returns {ObjectId} The corresponding ObjectId.
  */
 export function toObjId(id) {
-  return new ObjectId(id);
+  try {
+    return new ObjectId(id);
+  } catch (err) {
+    console.error(err.message);
+    return null;
+  }
+}
+/**
+ * Sends a JSON response with an error message and status code.
+ *
+ * @param {object} res - The response object.
+ * @param {string} error - The error message to include in the response.
+ * @param {number} [statusCode=400] - The HTTP status code to set for the response.
+ * Default is 400 (Bad Request).
+ */
+export function respond(res, error, statusCode = 400) {
+  res.status(statusCode).json({ error });
+}
+
+export async function setPublic(req, res, val) {
+  console.log(req.customData);
+  const { userId } = req.customData;
+  const filesCollection = db.client.db().collection('files');
+  console.log(req.params.id);
+  const _id = toObjId(req.params.id);
+  const newUpdate = {
+    $set: { isPublic: val },
+  };
+  console.log(_id, userId);
+  const file = await filesCollection.findOne({ _id, userId });
+  // console.log(file);
+  if (!file) respond(res, 'Not found', 404);
+  else {
+    const { localPath, ...response } = file;
+    try {
+      await filesCollection.updateOne({ _id, userId }, newUpdate);
+      res.status(200).json({ ...response, isPublic: val });
+    } catch (err) {
+      console.error(err.message);
+      respond('An error occured while updating the data', 500);
+    }
+  }
 }
