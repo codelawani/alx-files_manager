@@ -2,6 +2,7 @@ import {
   getUserFromToken, toObjId, respond, setPublic,
 } from '../utils/helpers';
 import db from '../utils/db';
+import fileQueue from '../worker';
 
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
@@ -32,7 +33,7 @@ export default class FilesController {
     if (parentId) {
       const _id = toObjId(parentId);
       const { type, localPath: parentPath } = await filesCollection.findOne({ _id });
-      localPath = `${parentPath}/${name}`;
+      localPath = `${parentPath}/${uuidv4()}`;
       if (!type) {
         respond(res, 'Parent not found');
         return;
@@ -78,6 +79,9 @@ export default class FilesController {
       parentId: parentId || 0,
       type,
     };
+    if (type === 'image') {
+      await fileQueue.add({ userId, fileId: response.id });
+    }
     // const { localPath, ...response } = { id: newFile.insertedId, ...fileDoc}
     res.status(201).json(response);
   }
@@ -136,19 +140,20 @@ export default class FilesController {
     const file = await filesCollection.findOne({ _id });
     const token = req.headers['x-token'];
     const { userId } = await getUserFromToken(token);
-    console.log(file);
-    console.log(userId);
     if (!file) {
       respond(res, 'Not found', 404);
     } else if (!file.isPublic && file.userId !== userId) {
-      console.log('first');
       respond(res, 'Not found', 404);
     } else if (file.type === 'folder') {
       respond(res, "A folder doesn't have content");
     } else {
+      const size = req.query.size ? `_${req.query.size}` : '';
       const mimeType = mime.lookup(file.name);
       const encoding = mimeType.split('/')[0] === 'text' ? 'utf-8' : 'binary';
-      fs.readFile(file.localPath, encoding, (err, data) => {
+      console.log(encoding, mimeType);
+      const filePath = file.localPath + size;
+      console.log(filePath);
+      fs.readFile(filePath, encoding, (err, data) => {
         if (!err) {
           res.setHeader('Content-Type', mimeType);
           res.json(data);

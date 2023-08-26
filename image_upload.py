@@ -5,7 +5,7 @@ import sys
 file_path = 'image.png'
 file_path = 'nezuko.jpg'
 file_name = file_path.split('/')[-1]
-token = 'd98adc9c-443a-460e-9098-ab0a4645c14c'
+token = 'de09a6e3-c48f-4d77-8f34-dab8c1debc18'
 parentId = '64e88e27d586193c094472f4'
 file_encoded = None
 with open(file_path, "rb") as image_file:
