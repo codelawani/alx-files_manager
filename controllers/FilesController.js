@@ -5,6 +5,7 @@ import db from '../utils/db';
 
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
+const mime = require('mime-types');
 
 export default class FilesController {
   static async postUpload(req, res) {
@@ -126,5 +127,37 @@ export default class FilesController {
 
   static async putUnpublish(req, res) {
     await setPublic(req, res, false);
+  }
+
+  static async getFile(req, res) {
+    const fileId = req.params.id;
+    const _id = toObjId(fileId);
+    const filesCollection = db.client.db().collection('files');
+    const file = await filesCollection.findOne({ _id });
+    const token = req.headers['x-token'];
+    const { userId } = await getUserFromToken(token);
+    console.log(file);
+    console.log(userId);
+    if (!file) {
+      respond(res, 'Not found', 404);
+    } else if (!file.isPublic && file.userId !== userId) {
+      console.log('first');
+      respond(res, 'Not found', 404);
+    } else if (file.type === 'folder') {
+      respond(res, "A folder doesn't have content");
+    } else {
+      const mimeType = mime.lookup(file.name);
+      const encoding = mimeType.split('/')[0] === 'text' ? 'utf-8' : 'binary';
+      fs.readFile(file.localPath, encoding, (err, data) => {
+        if (!err) {
+          res.setHeader('Content-Type', mimeType);
+          res.json(data);
+        } else if (err.code === 'ENOENT') {
+          console.error("file doesn't exist at", file.localPath);
+        } else {
+          console.error('Error reading message', err.message);
+        }
+      });
+    }
   }
 }
