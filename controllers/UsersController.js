@@ -15,7 +15,7 @@ export default class UsersController {
       const newUser = await usersColl.insertOne({ email, password: hashedpw });
       res.status(201).json({ email, id: newUser.insertedId });
     } else {
-      res.status(400).end('Already exist');
+      res.status(400).json({ error: 'Already exist' });
     }
   }
 
