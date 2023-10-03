@@ -6,8 +6,8 @@ const bcrypt = require('bcryptjs');
 export default class UsersController {
   static async postNew(req, res) {
     const { email, password } = req.body;
-    if (!email) res.status(400).end('Missing email');
-    if (!password) res.status(400).end('Missing password');
+    if (!email) res.status(400).json({ error: 'Missing email' });
+    if (!password) res.status(400).json({ error: 'Missing password' });
     const usersColl = await db.client.db().collection('users');
     const userExists = await usersColl.findOne({ email });
     if (!userExists) {
