@@ -35,4 +35,3 @@ fileQueue.process(async (job, done) => {
   }
 });
 export default fileQueue;
-// curl -XGET 0.0.0.0:5000/files/64ea43256de17f9adc97c0bf/data -so new_image.png ; file new_image.png

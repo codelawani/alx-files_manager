@@ -82,7 +82,6 @@ export default class FilesController {
     if (type === 'image') {
       await fileQueue.add({ userId, fileId: response.id });
     }
-    // const { localPath, ...response } = { id: newFile.insertedId, ...fileDoc}
     res.status(201).json(response);
   }
 
