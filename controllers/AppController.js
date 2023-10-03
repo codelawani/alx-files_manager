@@ -7,12 +7,12 @@ export default class AppController {
       redis: redis.isAlive(),
       db: db.isAlive(),
     };
-    res.status(200).json(status);
+    res.status(200).json(status).end();
   }
 
   static async getStats(req, res) {
     const users = await db.nbUsers();
     const files = await db.nbFiles();
-    res.status(200).json({ users, files });
+    res.status(200).json({ users, files }).end();
   }
 }
