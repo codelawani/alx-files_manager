@@ -3,9 +3,11 @@ import db from '../utils/db';
 
 export default class AppController {
   static getStatus(req, res) {
-    if (redis.isAlive && db.isAlive) {
-      res.status(200).json({ redis: true, db: true });
-    }
+    const status = {
+      redis: redis.isAlive(),
+      db: db.isAlive(),
+    };
+    res.status(200).json(status);
   }
 
   static async getStats(req, res) {
